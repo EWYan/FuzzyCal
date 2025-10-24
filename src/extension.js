@@ -207,7 +207,7 @@ function createSelectionPopupHandler(provider) {
           const selText = editor.selection && !editor.selection.isEmpty ? editor.document.getText(editor.selection).trim() : '';
           if (selText) {
             const validation = core.validateExpression(selText);
-            const mode = validation ? (isConvertibleNumber(selText) ? 'base' : undefined) : 'expr';
+            const mode = isConvertibleNumber(selText) ? 'base' : (validation ? undefined : 'expr');
             if (mode) {
               webPanel.webview.postMessage({ type: 'selection', expr: selText, mode });
             }
@@ -227,12 +227,9 @@ function createSelectionPopupHandler(provider) {
       // Limit overly long selections
       if (text.length > 200) { provider.clear(); return; }
 
-      // Try expression first; if not valid expression, try base-convert pattern
+      // Prefer base-number detection first; otherwise fall back to expression
       const validation = core.validateExpression(text);
-      if (validation) {
-        // Not a valid expression. Check numeric/base notations.
-        if (!isConvertibleNumber(text)) { provider.clear(); return; }
-
+      if (isConvertibleNumber(text)) {
         // Try base conversion
         if (timer) clearTimeout(timer);
         timer = setTimeout(async () => {
@@ -261,6 +258,7 @@ function createSelectionPopupHandler(provider) {
         }, 250);
         return;
       }
+      if (validation) { provider.clear(); return; }
 
       // Avoid spamming the same selection content
       if (text === lastShownText || showing) return;
@@ -326,7 +324,7 @@ function ensureWebPanel(context) {
           const t = editor.document.getText(editor.selection).trim();
           if (t) {
             const validation = core.validateExpression(t);
-            const mode = validation ? (isConvertibleNumber(t) ? 'base' : undefined) : 'expr';
+            const mode = isConvertibleNumber(t) ? 'base' : (validation ? undefined : 'expr');
             if (mode) webPanel.webview.postMessage({ type: 'selection', expr: t, mode });
           }
         }
