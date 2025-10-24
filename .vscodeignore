@@ -1,0 +1,10 @@
+**/*.ts
+**/*.map
+**/*.tsbuildinfo
+node_modules
+out/test
+.git
+.github
+.vscode
+README-assets
+
