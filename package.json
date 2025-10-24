@@ -1,8 +1,8 @@
 {
   "name": "fuzzycal",
-  "displayName": "FuzzyCal — 弹框计算器与进制转换",
+  "displayName": "FuzzyCal",
   "description": "一个快速弹框计算器：计算数字表达式，进制互转（bin/oct/dec/hex），支持从选中内容预填。",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "juzidaxia",
   "engines": {
     "vscode": "^1.80.0"
@@ -21,12 +21,22 @@
         "command": "fuzzycal.calculator",
         "title": "FuzzyCal: 弹框计算器 / 进制转换",
         "category": "FuzzyCal"
+      },
+      {
+        "command": "fuzzycal.openPanel",
+        "title": "FuzzyCal: 打开侧边面板",
+        "category": "FuzzyCal"
       }
     ],
     "keybindings": [
       {
         "command": "fuzzycal.calculator",
         "key": "ctrl+shift+alt+c",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "fuzzycal.openPanel",
+        "key": "ctrl+shift+alt+f",
         "when": "editorTextFocus"
       }
     ]

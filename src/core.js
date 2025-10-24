@@ -133,7 +133,6 @@ function parseBigIntAuto(s) {
   if (/^[0-9]+$/.test(str)) return sign * BigInt(str);
   // If it's pure hex digits/letters and has at least one A-F, treat as hex
   if (/^[0-9a-f]+$/i.test(str) && /[a-f]/i.test(str)) return sign * BigInt('0x' + str);
-  if (/^[0-9a-z]+$/i.test(str)) return sign * parseBigIntBase(str, 36);
   throw new Error('无法识别的数字格式');
 }
 
