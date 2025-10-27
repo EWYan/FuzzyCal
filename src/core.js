@@ -23,7 +23,21 @@ function validateExpression(expr) {
   return undefined;
 }
 
-function evaluateExpression(expr) {
+function evaluateExpression(expr, opts) {
+  try {
+    return evaluateExpressionMapped(expr);
+  } catch (err) {
+    if (!opts || !opts._leadingZeroHexTried) {
+      const converted = promoteLeadingZeroNumbers(expr);
+      if (converted && converted !== expr) {
+        return evaluateExpression(converted, { _leadingZeroHexTried: true });
+      }
+    }
+    throw err;
+  }
+}
+
+function evaluateExpressionMapped(expr) {
   const map = {
     'pi': 'Math.PI', 'PI': 'Math.PI', 'e': 'Math.E', 'E': 'Math.E',
     'sin': 'Math.sin', 'cos': 'Math.cos', 'tan': 'Math.tan',
@@ -43,6 +57,17 @@ function evaluateExpression(expr) {
 
   const fn = new Function('"use strict"; return (' + s + ');');
   return fn();
+}
+
+function promoteLeadingZeroNumbers(expr) {
+  if (!expr || typeof expr !== 'string') return expr;
+  let converted = false;
+  const replaced = expr.replace(/\b0[0-9a-fA-F_]{2,}\b/g, (match) => {
+    if (/^0+$/.test(match)) return match;
+    converted = true;
+    return '0x' + match.replace(/_/g, '');
+  });
+  return converted ? replaced : expr;
 }
 
 function buildNumberResults(value) {
@@ -123,6 +148,14 @@ function parseBigIntAuto(s) {
   if (str.startsWith('+')) str = str.slice(1);
   if (str.startsWith('-')) { sign = -1n; str = str.slice(1); }
   str = str.replace(/_/g, '');
+  if (/^0[0-9]+$/i.test(str)) {
+    const parsed = safeBigInt('0x' + str);
+    if (parsed !== undefined) return sign * parsed;
+  }
+  if (/^0[0-9a-f]+$/i.test(str) && /[a-f]/i.test(str)) {
+    const parsedHex = safeBigInt('0x' + str);
+    if (parsedHex !== undefined) return sign * parsedHex;
+  }
   const lower = str.toLowerCase();
   if (lower.startsWith('0x')) return sign * BigInt('0x' + str.slice(2));
   if (lower.startsWith('0b')) return sign * BigInt('0b' + str.slice(2));
@@ -134,6 +167,14 @@ function parseBigIntAuto(s) {
   // If it's pure hex digits/letters and has at least one A-F, treat as hex
   if (/^[0-9a-f]+$/i.test(str) && /[a-f]/i.test(str)) return sign * BigInt('0x' + str);
   throw new Error('无法识别的数字格式');
+}
+
+function safeBigInt(text) {
+  try {
+    return BigInt(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function parseBigIntBase(s, base) {
@@ -169,6 +210,7 @@ function stripNumericTokens(input) {
     /[+-]?\s*0b[01_]+/gi,
     /[+-]?\s*0o[0-7_]+/gi,
     /[+-]?\s*[0-9a-f_]+h\b/gi,
+    /\b0[0-9a-f_]+\b/gi,
     /[+-]?\s*[01_]+b\b/gi,
     /[+-]?\s*[0-7_]+o\b/gi,
     /[+-]?\s*\d{1,2}\s*#\s*[0-9a-z_]+/gi,

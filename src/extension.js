@@ -56,8 +56,18 @@ function activate(context) {
     });
     if (newExpr === undefined) return; // cancelled
     try {
+      const trimmed = (typeof newExpr === 'string' ? newExpr.trim() : '') || '';
+      let nextMode = mode;
+      if (trimmed) {
+        if (isConvertibleNumber(trimmed)) {
+          nextMode = 'base';
+        } else if (!core.validateExpression(trimmed)) {
+          nextMode = 'expr';
+        }
+      }
+
       let items;
-      if (mode === 'expr') {
+      if (nextMode === 'expr') {
         const value = core.evaluateExpression(newExpr);
         if (typeof value === 'number' && Number.isFinite(value)) {
           items = core.buildNumberResults(value);
@@ -74,7 +84,7 @@ function activate(context) {
           { label: result.oct, description: 'Oct' },
         ];
       }
-      provider.showForSelection(uri, range, items, { expr: newExpr, mode });
+      provider.showForSelection(uri, range, items, { expr: newExpr, mode: nextMode });
     } catch (err) {
       await vscode.window.showErrorMessage(`更新失败: ${err.message || err}`);
     }
@@ -468,10 +478,10 @@ function isConvertibleNumber(text) {
   // Aggressive heuristics:
   // - Pure hex letters/digits with at least one A-F -> treat as hex
   if (/^[+-]?[0-9a-f_]+$/i.test(s) && /[a-f]/i.test(s)) return true;
+  // - Leading-zero decimal-looking numbers often come from hex pairs -> treat as convertible
+  if (/^[+-]?0[0-9_]+$/i.test(s)) return true;
   // - Pure binary digits
   if (/^[+-]?[01_]+$/.test(s)) return true;
-  // - Pure octal digits (2-7 present) — may overlap with dec, acceptable
-  if (/^[+-]?[0-7_]+$/.test(s)) return true;
   return false;
 }
 
