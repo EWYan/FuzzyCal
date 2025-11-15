@@ -2,7 +2,7 @@
   "name": "fuzzycal",
   "displayName": "FuzzyCal",
   "description": "一个快速弹框计算器：计算数字表达式，进制互转（bin/oct/dec/hex），支持从选中内容预填。",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "juzidaxia",
   "repository": {
     "type": "git",

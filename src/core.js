@@ -148,6 +148,12 @@ function parseBigIntAuto(s) {
   if (str.startsWith('+')) str = str.slice(1);
   if (str.startsWith('-')) { sign = -1n; str = str.slice(1); }
   str = str.replace(/_/g, '');
+  const lower = str.toLowerCase();
+  // Check explicit prefixes first (0x, 0b, 0o) before heuristic checks
+  if (lower.startsWith('0x')) return sign * BigInt('0x' + str.slice(2));
+  if (lower.startsWith('0b')) return sign * BigInt('0b' + str.slice(2));
+  if (lower.startsWith('0o')) return sign * BigInt('0o' + str.slice(2));
+  // Heuristic checks for leading-zero numbers (after explicit prefixes)
   if (/^0[0-9]+$/i.test(str)) {
     const parsed = safeBigInt('0x' + str);
     if (parsed !== undefined) return sign * parsed;
@@ -156,10 +162,6 @@ function parseBigIntAuto(s) {
     const parsedHex = safeBigInt('0x' + str);
     if (parsedHex !== undefined) return sign * parsedHex;
   }
-  const lower = str.toLowerCase();
-  if (lower.startsWith('0x')) return sign * BigInt('0x' + str.slice(2));
-  if (lower.startsWith('0b')) return sign * BigInt('0b' + str.slice(2));
-  if (lower.startsWith('0o')) return sign * BigInt('0o' + str.slice(2));
   if (/^[0-9a-f]+h$/i.test(str)) return sign * BigInt('0x' + str.slice(0, -1));
   if (/^[01]+b$/i.test(str)) return sign * BigInt('0b' + str.slice(0, -1));
   if (/^[0-7]+o$/i.test(str)) return sign * BigInt('0o' + str.slice(0, -1));
